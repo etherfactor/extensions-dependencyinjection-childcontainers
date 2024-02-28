@@ -1,0 +1,184 @@
+﻿using Microsoft.Extensions.DependencyInjection;
+using System;
+using System.Collections.Generic;
+using System.Threading;
+
+namespace EtherGizmos.Extensions.DependenyInjection.Internal;
+
+internal class ChildContainerBuilder : IChildContainerBuilder
+{
+    private readonly Guid _childContainerId;
+
+    private readonly IServiceCollection _parentServices;
+    private readonly IServiceCollection _childServices;
+    private readonly Action<IServiceCollection, IServiceProvider> _configureChild;
+    private readonly List<(Type ServiceType, ServiceLifetime Lifetime)> _childImports = new();
+
+    /// <summary>
+    /// Keep track of dependency chains on a per-thread basis. If we end up back in this container, resolving the same
+    /// type, there's a dependency chain, and the user needs to be notified.
+    /// </summary>
+    private readonly ThreadLocal<HashSet<Type>> _resolutionStack = new(() => new());
+
+    /// <inheritdoc/>
+    public IServiceCollection ChildServices => _childServices;
+
+    public ChildContainerBuilder(
+        Guid childContainerId,
+        IServiceCollection parentServices,
+        Action<IServiceCollection, IServiceProvider> configureChild)
+    {
+        _childContainerId = childContainerId;
+        _parentServices = parentServices;
+        _childServices = new ServiceCollection();
+        _configureChild = configureChild;
+    }
+
+    /// <inheritdoc/>
+    public IChildContainerBuilder ForwardScoped<TService>()
+        where TService : class
+    {
+        _parentServices.AddScoped<TService>(services =>
+        {
+            AssertNoCycle<TService>();
+            AddToStack<TService>();
+
+            try
+            {
+                var factory = services.GetRequiredService<ChildServiceProviderFactory>();
+
+                factory.TryAddServiceCollection(_childContainerId, _childServices, _configureChild, _childImports);
+                var thisServiceProvider = factory.GetScopedServiceProvider(_childContainerId, services);
+
+                var service = thisServiceProvider.GetRequiredService<TService>();
+
+                return service;
+            }
+            catch (CircularDependencyException ex)
+            {
+                ex.PrependAndThrow(typeof(TService));
+                throw;
+            }
+            finally
+            {
+                RemoveFromStack<TService>();
+            }
+        });
+
+        return this;
+    }
+
+    /// <inheritdoc/>
+    public IChildContainerBuilder ForwardSingleton<TService>()
+        where TService : class
+    {
+        _parentServices.AddSingleton<TService>(services =>
+        {
+            AssertNoCycle<TService>();
+            AddToStack<TService>();
+
+            try
+            {
+                var factory = services.GetRequiredService<ChildServiceProviderFactory>();
+
+                factory.TryAddServiceCollection(_childContainerId, _childServices, _configureChild, _childImports);
+                var thisServiceProvider = factory.GetSingletonServiceProvider(_childContainerId, services);
+
+                var service = thisServiceProvider.GetRequiredService<TService>();
+
+                return service;
+            }
+            catch (CircularDependencyException ex)
+            {
+                ex.PrependAndThrow(typeof(TService));
+                throw;
+            }
+            finally
+            {
+                RemoveFromStack<TService>();
+            }
+        });
+
+        return this;
+    }
+
+    /// <inheritdoc/>
+    public IChildContainerBuilder ForwardTransient<TService>()
+        where TService : class
+    {
+        _parentServices.AddTransient<TService>(services =>
+        {
+            AssertNoCycle<TService>();
+            AddToStack<TService>();
+
+            try
+            {
+                var factory = services.GetRequiredService<ChildServiceProviderFactory>();
+
+                factory.TryAddServiceCollection(_childContainerId, _childServices, _configureChild, _childImports);
+                var thisServiceProvider = factory.GetSingletonServiceProvider(_childContainerId, services);
+
+                var service = thisServiceProvider.GetRequiredService<TService>();
+
+                return service;
+            }
+            catch (CircularDependencyException ex)
+            {
+                ex.PrependAndThrow(typeof(TService));
+                throw;
+            }
+            finally
+            {
+                RemoveFromStack<TService>();
+            }
+        });
+
+        return this;
+    }
+
+    /// <inheritdoc/>
+    public IChildContainerBuilder ImportScoped<TService>()
+        where TService : class
+    {
+        _childImports.Add((typeof(TService), ServiceLifetime.Scoped));
+
+        return this;
+    }
+
+    /// <inheritdoc/>
+    public IChildContainerBuilder ImportSingleton<TService>()
+        where TService : class
+    {
+        _childImports.Add((typeof(TService), ServiceLifetime.Singleton));
+
+        return this;
+    }
+
+    /// <inheritdoc/>
+    public IChildContainerBuilder ImportTransient<TService>()
+        where TService : class
+    {
+        _childImports.Add((typeof(TService), ServiceLifetime.Transient));
+
+        return this;
+    }
+
+    private void AddToStack<TService>()
+    {
+        _resolutionStack.Value!.Add(typeof(TService));
+    }
+
+    private void RemoveFromStack<TService>()
+    {
+        _resolutionStack.Value!.Remove(typeof(TService));
+    }
+
+    private void AssertNoCycle<TService>()
+    {
+        var stack = _resolutionStack.Value!;
+        if (stack.Contains(typeof(TService)))
+        {
+            throw new CircularDependencyException(typeof(TService));
+        }
+    }
+}
