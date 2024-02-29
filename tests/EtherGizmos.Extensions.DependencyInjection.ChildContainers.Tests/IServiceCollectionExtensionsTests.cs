@@ -274,12 +274,12 @@ internal class IServiceCollectionExtensionsTests
 
     private class TestA
     {
-        public required string Data { get; set; }
+        public string Data { get; set; } = null!;
     }
 
     private class TestB
     {
-        public required string Data { get; set; }
+        public string Data { get; set; } = null!;
     }
 
     private class Parent
@@ -294,7 +294,7 @@ internal class IServiceCollectionExtensionsTests
 
     private class Child
     {
-        public required string Name { get; set; }
+        public string Name { get; set; } = null!;
     }
 
     private class RecursiveChild : Child
