@@ -1,6 +1,6 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 
-namespace EtherGizmos.Extensions.DependenyInjection;
+namespace EtherGizmos.Extensions.DependencyInjection;
 
 /// <summary>
 /// Provides methods to pass services back and forth between a parent and a child service container. Does not initialize any scopes.

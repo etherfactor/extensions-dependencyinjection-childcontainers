@@ -1,11 +1,17 @@
 ﻿using System;
 
-namespace EtherGizmos.Extensions.DependenyInjection.Internal;
+namespace EtherGizmos.Extensions.DependencyInjection.Internal;
 
+/// <summary>
+/// Contains a reference to the root parent service provider.
+/// </summary>
 internal class ParentServiceProviderSingletonSource
 {
     private IServiceProvider? _parentProvider;
 
+    /// <summary>
+    /// The root parent service provider.
+    /// </summary>
     public IServiceProvider ParentProvider => _parentProvider
         ?? throw new InvalidOperationException("No parent provider was specified");
 

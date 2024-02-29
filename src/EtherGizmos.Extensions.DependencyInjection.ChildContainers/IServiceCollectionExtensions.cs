@@ -1,9 +1,9 @@
-﻿using EtherGizmos.Extensions.DependenyInjection.Internal;
+﻿using EtherGizmos.Extensions.DependencyInjection.Internal;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using System;
 
-namespace EtherGizmos.Extensions.DependenyInjection;
+namespace EtherGizmos.Extensions.DependencyInjection;
 
 public static class IServiceCollectionExtensions
 {

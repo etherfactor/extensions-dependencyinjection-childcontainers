@@ -3,7 +3,7 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 
-namespace EtherGizmos.Extensions.DependenyInjection.Internal;
+namespace EtherGizmos.Extensions.DependencyInjection.Internal;
 
 /// <summary>
 /// Produces child service providers.
@@ -19,6 +19,13 @@ internal class ChildServiceProviderFactory
         _parentRootProvider = parentRootProvider;
     }
 
+    /// <summary>
+    /// Attempts to add the child container to the parent container.
+    /// </summary>
+    /// <param name="id">The id of the child container.</param>
+    /// <param name="childServices">The child service registrations.</param>
+    /// <param name="configureChild">The action to configure the child services.</param>
+    /// <param name="imports">Any additional imports from the parent.</param>
     public void TryAddServiceCollection(
         Guid id,
         IServiceCollection childServices,
@@ -40,6 +47,7 @@ internal class ChildServiceProviderFactory
                     ServiceDescriptor descriptor;
                     if (import.Lifetime == ServiceLifetime.Scoped)
                     {
+                        //Scoped imports need to be pulled from a scoped parent context (note 2nd line)
                         descriptor = ServiceDescriptor.Describe(import.ServiceType, childProvider =>
                             childProvider.GetRequiredService<ParentServiceProviderScopedSource>()
                                 .ParentProvider
@@ -48,6 +56,7 @@ internal class ChildServiceProviderFactory
                     }
                     else
                     {
+                        //Singleton and transient imports can be pulled from the root parent context (note 2nd line)
                         descriptor = ServiceDescriptor.Describe(import.ServiceType, childProvider =>
                             childProvider.GetRequiredService<ParentServiceProviderSingletonSource>()
                                 .ParentProvider
@@ -74,9 +83,11 @@ internal class ChildServiceProviderFactory
             .CreateScope()
             .ServiceProvider;
 
+        //Associate the scoped parent provider for singleton/transient services
         var parentProviderSingletonSource = scope.GetRequiredService<ParentServiceProviderSingletonSource>();
         parentProviderSingletonSource.SetProvider(parentProvider);
 
+        //Associate the scoped parent provider for scoped services
         var parentProviderScopedSource = scope.GetRequiredService<ParentServiceProviderScopedSource>();
         parentProviderScopedSource.SetProvider(parentProvider);
 
@@ -93,6 +104,7 @@ internal class ChildServiceProviderFactory
     {
         var scope = _childProviders[id];
 
+        //Associate the root parent provider for singleton/transient services
         var parentProviderSingletonSource = scope.GetRequiredService<ParentServiceProviderSingletonSource>();
         parentProviderSingletonSource.SetProvider(parentProvider);
 

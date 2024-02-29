@@ -1,8 +1,8 @@
-﻿using EtherGizmos.Extensions.DependenyInjection.Internal;
+﻿using EtherGizmos.Extensions.DependencyInjection.Internal;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
-namespace EtherGizmos.Extensions.DependenyInjection;
+namespace EtherGizmos.Extensions.DependencyInjection;
 
 /// <summary>
 /// Provides extension methods for <see cref="IChildContainerBuilder"/>.

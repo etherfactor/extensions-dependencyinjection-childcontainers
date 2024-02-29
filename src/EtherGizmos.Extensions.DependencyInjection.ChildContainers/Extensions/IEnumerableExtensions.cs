@@ -1,7 +1,10 @@
 ﻿using System.Collections.Generic;
 
-namespace EtherGizmos.Extensions.DependenyInjection.Extensions;
+namespace EtherGizmos.Extensions.DependencyInjection.Extensions;
 
+/// <summary>
+/// Provides extension methods for <see cref="IEnumerable{T}"/>.
+/// </summary>
 internal static class IEnumerableExtensions
 {
     /// <summary>
