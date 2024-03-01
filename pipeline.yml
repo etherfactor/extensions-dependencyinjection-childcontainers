@@ -9,6 +9,8 @@ variables:
   GitVersion.Config: 'gitversion.yml'
   NuGet.Version: '6.x.x'
   Build.Projects: '**/*.csproj'
+  Build.Projects.Library: 'EtherGizmos.Extensions.DependencyInjection.ChildContainers'
+  Build.Configuration: 'Release'
 
 jobs:
 - job: prepare
@@ -81,3 +83,34 @@ jobs:
       codeCoverageTool: 'Cobertura'
       summaryFileLocation: '$(Build.SourcesDirectory)/CoverageResults/Cobertura.xml'
       reportDirectory: '$(Build.SourcesDirectory)/CoverageResults'
+
+- job: publish
+  #condition: and( succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main') )
+  dependsOn: build
+  displayName: 'Publish Tasks'
+  variables:
+    CheckDependencies: $[ convertToJson( dependencies ) ]
+  steps:
+
+  - task: PowerShell@2
+    displayName: 'Debug Dependencies'
+    inputs:
+      targetType: 'inline'
+      script: 'Write-Host $env:CHECK_DEPENDENCIES'
+    env:
+      CHECK_DEPENDENCIES: $(CheckDependencies)
+
+  - task: NuGetCommand@2
+    inputs:
+      command: 'pack'
+      packagesToPack: '**/$(Build.Projects.Library).csproj'
+      configuration: '$(Build.Configuration)'
+      versioningScheme: 'byBuildNumber'
+      includeSymbols: true
+
+#  - task: NuGetCommand@2
+#    inputs:
+#      command: 'push'
+#      packagesToPush: '$(Build.ArtifactStagingDirectory)/**/*.nupkg;!$(Build.ArtifactStagingDirectory)/**/*.symbols.nupkg'
+#      nuGetFeedType: 'external'
+#      publishFeedCredentials: 'NuGet'
