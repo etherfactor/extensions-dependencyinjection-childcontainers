@@ -32,8 +32,11 @@ internal class IServiceCollectionExtensionsTests
         var testB = provider.GetRequiredService<TestB>();
 
         //Assert
-        Assert.That(testB, Is.Not.Null);
-        Assert.That(testB.Data, Is.EqualTo(testA.Data));
+        Assert.Multiple(() =>
+        {
+            Assert.That(testB, Is.Not.Null);
+            Assert.That(testB.Data, Is.EqualTo(testA.Data));
+        });
     }
 
     [Test]
@@ -56,8 +59,11 @@ internal class IServiceCollectionExtensionsTests
         var testB = provider.GetRequiredService<TestB>();
 
         //Assert
-        Assert.That(testB, Is.Not.Null);
-        Assert.That(testB.Data, Is.EqualTo(testA.Data));
+        Assert.Multiple(() =>
+        {
+            Assert.That(testB, Is.Not.Null);
+            Assert.That(testB.Data, Is.EqualTo(testA.Data));
+        });
     }
 
     [Test]
@@ -80,8 +86,11 @@ internal class IServiceCollectionExtensionsTests
         var child = provider.GetRequiredService<Child>();
 
         //Assert
-        Assert.That(parent, Is.Not.Null);
-        Assert.That(parent.Child.Name, Is.EqualTo(child.Name));
+        Assert.Multiple(() =>
+        {
+            Assert.That(parent, Is.Not.Null);
+            Assert.That(parent.Child.Name, Is.EqualTo(child.Name));
+        });
     }
 
     [Test]
@@ -105,8 +114,11 @@ internal class IServiceCollectionExtensionsTests
         var child = provider.GetRequiredService<Child>();
 
         //Assert
-        Assert.That(parent, Is.Not.Null);
-        Assert.That(parent.Child.Name, Is.EqualTo(child.Name));
+        Assert.Multiple(() =>
+        {
+            Assert.That(parent, Is.Not.Null);
+            Assert.That(parent.Child.Name, Is.EqualTo(child.Name));
+        });
     }
 
     [Test]
@@ -129,8 +141,11 @@ internal class IServiceCollectionExtensionsTests
         var child = provider.GetRequiredService<Child>();
 
         //Assert
-        Assert.That(parent, Is.Not.Null);
-        Assert.That(parent.Child.Name, Is.EqualTo(child.Name));
+        Assert.Multiple(() =>
+        {
+            Assert.That(parent, Is.Not.Null);
+            Assert.That(parent.Child.Name, Is.EqualTo(child.Name));
+        });
     }
 
     [Test]
@@ -149,8 +164,11 @@ internal class IServiceCollectionExtensionsTests
         var provider = _serviceCollection.BuildServiceProvider();
 
         //Assert
-        Assert.DoesNotThrow(() => provider.GetRequiredService<TestA>());
-        Assert.Throws<InvalidOperationException>(() => provider.GetRequiredService<TestB>());
+        Assert.Multiple(() =>
+        {
+            Assert.DoesNotThrow(() => provider.GetRequiredService<TestA>());
+            Assert.Throws<InvalidOperationException>(() => provider.GetRequiredService<TestB>());
+        });
     }
 
     [Test]
@@ -171,8 +189,11 @@ internal class IServiceCollectionExtensionsTests
         var testA_2 = provider.GetRequiredService<TestA>();
 
         //Assert
-        Assert.That(testA_1, Is.Not.Null);
-        Assert.That(testA_1, Is.EqualTo(testA_2));
+        Assert.Multiple(() =>
+        {
+            Assert.That(testA_1, Is.Not.Null);
+            Assert.That(testA_1, Is.EqualTo(testA_2));
+        });
     }
 
     [Test]
@@ -230,8 +251,11 @@ internal class IServiceCollectionExtensionsTests
         var testA_2 = provider.GetRequiredService<TestA>();
 
         //Assert
-        Assert.That(testA_1, Is.Not.Null);
-        Assert.That(testA_1, Is.Not.EqualTo(testA_2));
+        Assert.Multiple(() =>
+        {
+            Assert.That(testA_1, Is.Not.Null);
+            Assert.That(testA_1, Is.Not.EqualTo(testA_2));
+        });
     }
 
     [Test]
@@ -272,12 +296,113 @@ internal class IServiceCollectionExtensionsTests
         });
     }
 
+    [Test]
+    public void AddChildContainer_NestedContainers_ResolvesServices()
+    {
+        //Arrange
+        _serviceCollection
+            .AddSingleton<TestA>(e => new TestA() { Data = "Parent" })
+            .AddChildContainer((childServices1, parentServices1) =>
+            {
+                childServices1.AddSingleton<TestB>(e => new TestB() { Data = "Child1" })
+                    .AddChildContainer((childServices2, parentServices2) =>
+                    {
+                        var testA = parentServices2.GetRequiredService<TestA>();
+                        childServices2.AddSingleton<TestC>(e => new TestC() { Data = testA.Data + " - Child2" });
+                    })
+                    .ForwardSingleton<TestC>();
+            })
+            .ImportSingleton<TestA>()
+            .ForwardSingleton<TestB>()
+            .ForwardSingleton<TestC>();
+
+        //Act
+        var provider = _serviceCollection.BuildServiceProvider();
+
+        var testA = provider.GetRequiredService<TestA>();
+        var testB = provider.GetRequiredService<TestB>();
+        var testC = provider.GetRequiredService<TestC>();
+
+        //Assert
+        Assert.Multiple(() =>
+        {
+            Assert.That(testA, Is.Not.Null);
+            Assert.That(testB, Is.Not.Null);
+            Assert.That(testC, Is.Not.Null);
+            Assert.That(testC.Data, Is.EqualTo("Parent - Child2"));
+        });
+    }
+
+    [Test]
+    public void AddChildContainer_ImportMultipleServices_ResolvesServices()
+    {
+        //Arrange
+        _serviceCollection
+            .AddTransient<TestA>(e => new TestA() { Data = "TestA" })
+            .AddTransient<TestB>(e => new TestB() { Data = "TestB" })
+            .AddChildContainer((childServices, parentServices) =>
+            {
+                childServices.AddTransient<WrapperA>();
+                childServices.AddTransient<WrapperB>();
+            })
+            .ImportTransient<TestA>()
+            .ImportTransient<TestB>()
+            .ForwardTransient<WrapperA>()
+            .ForwardTransient<WrapperB>();
+
+        //Act
+        var provider = _serviceCollection.BuildServiceProvider();
+
+        var wrapperA = provider.GetRequiredService<WrapperA>();
+        var wrapperB = provider.GetRequiredService<WrapperB>();
+
+        //Assert
+        Assert.Multiple(() =>
+        {
+            Assert.That(wrapperA, Is.Not.Null);
+            Assert.That(wrapperA.TestA, Is.Not.Null);
+            Assert.That(wrapperA.TestA.Data, Is.EqualTo("TestA"));
+        });
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(wrapperB, Is.Not.Null);
+            Assert.That(wrapperB.TestB, Is.Not.Null);
+            Assert.That(wrapperB.TestB.Data, Is.EqualTo("TestB"));
+        });
+    }
+
     private class TestA
     {
         public string Data { get; set; } = null!;
     }
 
+    private class WrapperA
+    {
+        public TestA TestA { get; set; }
+
+        public WrapperA(TestA testA)
+        {
+            TestA = testA;
+        }
+    }
+
     private class TestB
+    {
+        public string Data { get; set; } = null!;
+    }
+
+    private class WrapperB
+    {
+        public TestB TestB { get; set; }
+
+        public WrapperB(TestB testB)
+        {
+            TestB = testB;
+        }
+    }
+
+    private class TestC
     {
         public string Data { get; set; } = null!;
     }

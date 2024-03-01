@@ -22,7 +22,7 @@ internal class ChildContainerBuilder : IChildContainerBuilder
     /// Keep track of dependency chains on a per-thread basis. If we end up back in this container, resolving the same
     /// type, there's a dependency chain, and the user needs to be notified.
     /// </summary>
-    private static readonly ThreadLocal<HashSet<Type>> _resolutionStack = new(() => new());
+    private static readonly ThreadLocal<HashSet<ValueTuple<ChildContainerBuilder, Type>>> _resolutionStack = new(() => new());
 
     /// <inheritdoc/>
     public IServiceCollection ChildServices => _childServices;
@@ -158,7 +158,7 @@ internal class ChildContainerBuilder : IChildContainerBuilder
     /// <typeparam name="TService">The type of service.</typeparam>
     private void AddToStack<TService>()
     {
-        _resolutionStack.Value!.Add(typeof(TService));
+        _resolutionStack.Value!.Add(ValueTuple.Create(this, typeof(TService)));
     }
 
     /// <summary>
@@ -167,7 +167,7 @@ internal class ChildContainerBuilder : IChildContainerBuilder
     /// <typeparam name="TService">The type of service.</typeparam>
     private void RemoveFromStack<TService>()
     {
-        _resolutionStack.Value!.Remove(typeof(TService));
+        _resolutionStack.Value!.Remove(ValueTuple.Create(this, typeof(TService)));
     }
 
     /// <summary>
@@ -178,11 +178,11 @@ internal class ChildContainerBuilder : IChildContainerBuilder
     private void AssertNoCycle<TService>()
     {
         var stack = _resolutionStack.Value!;
-        if (stack.Contains(typeof(TService)))
+        if (stack.Contains(ValueTuple.Create(this, typeof(TService))))
         {
             //The service type is already in the hashset, so append it at the end as this is what closes the dependency loop
             var serviceType = typeof(TService);
-            throw new CircularDependencyException(_resolutionStack.Value.Append(serviceType));
+            throw new CircularDependencyException(_resolutionStack.Value.Select(e => e.Item2).Append(serviceType));
         }
     }
 }

@@ -1,11 +1,6 @@
 ﻿using EtherGizmos.Extensions.DependencyInjection.Internal;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace EtherGizmos.Extensions.DependencyInjection.ChildContainers.Tests;
 
@@ -20,7 +15,7 @@ internal class IChildContainerBuilderExtensionsTests
     }
 
     [Test]
-    public void ImportLogging_WithParentLogger_ForwardsLogger()
+    public void ImportLogging_WithTransientService_ResolvesLogger()
     {
         //Arrange
         var logger = new TestLogger();
@@ -56,6 +51,50 @@ internal class IChildContainerBuilderExtensionsTests
         Assert.That(logger.IsLogged, Is.False);
         wrapper.Logger.Log(LogLevel.Information, "");
         Assert.That(logger.IsLogged, Is.True);
+    }
+
+    [Test]
+    public void ImportLogging_WithScopedService_ResolvesLogger()
+    {
+        //Arrange
+        var logger = new TestLogger();
+        _serviceCollection
+            .AddSingleton<ILoggerFactory>(e => new TestLoggerFactory(logger))
+            .AddChildContainer((childServices, parentServices) =>
+            {
+                childServices.AddScoped<Wrapper>();
+            })
+            .ImportLogging()
+            .ForwardScoped<Wrapper>();
+
+        //Act
+        var provider = _serviceCollection.BuildServiceProvider();
+
+        var scope = provider.CreateScope();
+
+        var factory = scope.ServiceProvider.GetRequiredService<ILoggerFactory>();
+        var wrapper = scope.ServiceProvider.GetRequiredService<Wrapper>();
+
+        // Assert
+        Assert.Multiple(() =>
+        {
+            Assert.That(wrapper, Is.Not.Null);
+            Assert.That(wrapper.Logger, Is.Not.Null);
+            Assert.That(wrapper.Logger.GetType(), Is.EqualTo(typeof(LoggerForward<Wrapper>)));
+        });
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(factory, Is.Not.Null);
+            Assert.That(factory.GetType(), Is.EqualTo(typeof(TestLoggerFactory)));
+        });
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(logger.IsLogged, Is.False);
+            wrapper.Logger.Log(LogLevel.Information, "");
+            Assert.That(logger.IsLogged, Is.True);
+        });
     }
 
     private class TestLoggerFactory : ILoggerFactory
