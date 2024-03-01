@@ -105,6 +105,7 @@ jobs:
     inputs:
       command: 'build'
       projects: '**/$(Build.Projects.Library).csproj'
+      arguments: '--configuration $(Build.Configuration)'
 
   - task: NuGetCommand@2
     displayName: 'Package Library'
