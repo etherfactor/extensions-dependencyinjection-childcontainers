@@ -1,0 +1,83 @@
+trigger:
+- main
+
+pool:
+  vmImage: 'windows-latest'
+
+variables:
+  GitVersion.Version: '5.x.x'
+  GitVersion.Config: 'gitversion.yml'
+  NuGet.Version: '6.x.x'
+  Build.Projects: '**/*.csproj'
+
+jobs:
+- job: prepare
+  displayName: 'Pre-Build Tasks'
+  steps:
+  - checkout: self
+    fetchDepth: 0
+    clean: true
+
+  - task: gitversion/setup@0
+    displayName: 'Install GitVersion'
+    inputs:
+      versionSpec: '$(GitVersion.Version)'
+
+  - task: gitversion/execute@0
+    displayName: 'Run GitVersion'
+    inputs:
+      useConfigFile: true
+      configFilePath: '$(GitVersion.Config)'
+
+- job: build
+  dependsOn: prepare
+  displayName: 'Build Tasks'
+  variables:
+    CheckDependencies: $[ convertToJson( dependencies ) ]
+  steps:
+
+  - task: PowerShell@2
+    displayName: 'Debug Dependencies'
+    inputs:
+      targetType: 'inline'
+      script: 'Write-Host $env:CHECK_DEPENDENCIES'
+    env:
+      CHECK_DEPENDENCIES: $(CheckDependencies)
+
+  - task: NuGetToolInstaller@1
+    displayName: 'Install NuGet'
+    inputs:
+      versionSpec: '$(NuGet.Version)'
+
+  - task: DotNetCoreCLI@2
+    displayName: 'Restore Projects'
+    inputs:
+      command: 'restore'
+      projects: '$(Build.Projects)'
+      feedsToUse: 'select'
+
+  - task: DotNetCoreCLI@2
+    displayName: 'Build Projects'
+    inputs:
+      command: 'build'
+      projects: '$(Build.Projects)'
+
+  - task: DotNetCoreCLI@2
+    displayName: 'Perform Tests'
+    inputs:
+      command: 'test'
+      projects: '**/$(Build.Projects.Api).*Tests.csproj'
+      arguments: '--collect "XPlat Code Coverage"'
+
+  - task: reportgenerator@5
+    displayName: 'Combine Code Coverage'
+    inputs:
+      reports: '$(Agent.TempDirectory)/**/coverage.cobertura.xml'
+      targetdir: '$(Build.SourcesDirectory)/CoverageResults'
+
+  - task: PublishCodeCoverageResults@1
+    displayName: 'Publish Code Coverage'
+    inputs:
+      codeCoverageTool: 'Cobertura'
+      summaryFileLocation: '$(Build.SourcesDirectory)/CoverageResults/Cobertura.xml'
+      reportDirectory: '$(Build.SourcesDirectory)/CoverageResults'
