@@ -100,7 +100,14 @@ jobs:
     env:
       CHECK_DEPENDENCIES: $(CheckDependencies)
 
+  - task: DotNetCoreCLI@2
+    displayName: 'Build Library'
+    inputs:
+      command: 'build'
+      projects: '**/$(Build.Projects.Library).csproj'
+
   - task: NuGetCommand@2
+    displayName: 'Package Library'
     inputs:
       command: 'pack'
       packagesToPack: '**/$(Build.Projects.Library).csproj'
@@ -109,6 +116,7 @@ jobs:
       includeSymbols: true
 
 #  - task: NuGetCommand@2
+#    displayName: 'Publish Library'
 #    inputs:
 #      command: 'push'
 #      packagesToPush: '$(Build.ArtifactStagingDirectory)/**/*.nupkg;!$(Build.ArtifactStagingDirectory)/**/*.symbols.nupkg'
