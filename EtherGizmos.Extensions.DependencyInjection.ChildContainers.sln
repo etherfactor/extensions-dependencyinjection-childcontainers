@@ -8,9 +8,10 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{50A2B42D-0642-4A10-B3CD-D3BE32B57564}"
 	ProjectSection(SolutionItems) = preProject
 		.editorconfig = .editorconfig
+		.runsettings = .runsettings
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EtherGizmos.Extensions.DependencyInjection.ChildContainers.Tests", "tests\EtherGizmos.Extensions.DependencyInjection.ChildContainers.Tests\EtherGizmos.Extensions.DependencyInjection.ChildContainers.Tests.csproj", "{3057F3A9-9B7F-4067-814C-FFF0AA00D9BE}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EtherGizmos.Extensions.DependencyInjection.ChildContainers.Tests", "tests\EtherGizmos.Extensions.DependencyInjection.ChildContainers.Tests\EtherGizmos.Extensions.DependencyInjection.ChildContainers.Tests.csproj", "{3057F3A9-9B7F-4067-814C-FFF0AA00D9BE}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
