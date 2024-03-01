@@ -372,6 +372,68 @@ internal class IServiceCollectionExtensionsTests
         });
     }
 
+    [Test]
+    public void AddChildContainer_ServiceReplacement_ResolvesReplacedService()
+    {
+        //Arrange
+        _serviceCollection
+            .AddSingleton<TestA>(e => new TestA() { Data = "Parent" })
+            .AddChildContainer((childServices, parentServices) =>
+            {
+                childServices.AddSingleton<TestA>(e => new TestA() { Data = "Child" });
+            })
+            .ForwardSingleton<TestA>();
+
+        //Act
+        var provider = _serviceCollection.BuildServiceProvider();
+
+        var testA = provider.GetRequiredService<TestA>();
+
+        //Assert
+        Assert.That(testA, Is.Not.Null);
+        Assert.That(testA.Data, Is.EqualTo("Child"));
+    }
+
+    [TestCase(true, false)]
+    [TestCase(false, true)]
+    public void AddChildContainer_ConditionalRegistration_ResolvesServices(bool condition, bool isInvalid)
+    {
+        //Arrange
+        _serviceCollection
+            .AddSingleton<TestA>(e => new TestA() { Data = "Test" })
+            .AddChildContainer((childServices, parentServices) =>
+            {
+                if (condition)
+                {
+                    childServices.AddSingleton<TestB>();
+                }
+            })
+            .ForwardSingleton<TestB>();
+
+        //Act
+        var provider = _serviceCollection.BuildServiceProvider();
+
+        var testA = provider.GetRequiredService<TestA>();
+
+        //Assert
+        Assert.That(testA, Is.Not.Null);
+
+        if (condition)
+        {
+            Assert.DoesNotThrow(() =>
+            {
+                var testB = provider.GetService<TestB>();
+            });
+        }
+        else
+        {
+            Assert.Throws<InvalidOperationException>(() =>
+            {
+                var testB = provider.GetService<TestB>();
+            });
+        }
+    }
+
     private class TestA
     {
         public string Data { get; set; } = null!;
