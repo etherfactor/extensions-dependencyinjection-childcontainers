@@ -112,6 +112,7 @@ jobs:
       includesymbols: true
       includesource: true
       versioningScheme: 'byEnvVar'
+      versionEnvVar: 'BUILD_VERSION'
     env:
       BUILD_VERSION: $(BuildVersion)
 
