@@ -109,52 +109,14 @@ jobs:
 #      publishFeedCredentials: 'NuGet'
 
   - task: PowerShell@2
-    displayName: 'Create docs Directory'
+    displayName: 'Create Trigger Artifact'
     inputs:
       targetType: 'inline'
-      script: 'New-Item -ItemType Directory -Force -Path $(Build.ArtifactStagingDirectory)/docs'
-
-  - task: XplatGenerateReleaseNotes@4
-    displayName: 'Generate Release Notes'
-    inputs:
-      outputfile: '$(Build.ArtifactStagingDirectory)/docs/RELEASENOTES.md'
-      templateLocation: 'InLine'
-      inlinetemplate: |
-        ## Build {{buildDetails.buildNumber}}
-        {{buildDetails.startTime}}
-        
-        **Features**
-        {{#forEach this.workItems}}
-        {{#if (eq (lookup this.fields 'System.WorkItemType') 'Feature')}}
-        ### [{{lookup this.fields 'System.Title'}}]({{replace this.url "_apis/wit/workItems" "_workitems/edit"}})
-        {{lookup this.fields 'System.Description'}}
-        
-        **Child Work Items**
-        | ID | Type | Title |
-        |----|------|-------|
-        {{#forEach this.relations}}
-        {{#if (contains this.attributes.name 'Parent')}}
-        {{#with (lookup_a_work_item ../../../../relatedWorkItems this.url)}}
-        | {{this.id}} | {{lookup this.fields 'System.WorkItemType'}} | [{{lookup this.fields 'System.Title'}}]({{replace this.url "_apis/wit/workItems" "_workitems/edit"}}) |
-        {{/with}}
-        {{/if}}
-        {{/forEach}}
-        {{/if}}
-        {{/forEach}}
-      dumpPayloadToConsole: false
-      dumpPayloadToFile: false
-      replaceFile: true
-      getParentsAndChildren: false
-      getAllParents: false
-      getIndirectPullRequests: false
-      stopOnError: false
-      considerPartiallySuccessfulReleases: false
-      checkForManuallyLinkedWI: false
-      wiqlFromTarget: 'WorkItems'
+      script: 'New-Item -ItemType File -Force -Path $(Build.ArtifactStagingDirectory)/release/.placeholder'
 
   - task: PublishBuildArtifacts@1
-    displayName: 'Publish Documentation'
+    displayName: 'Publish Trigger Artifact'
     inputs:
-      PathtoPublish: '$(Build.ArtifactStagingDirectory)/docs'
-      ArtifactName: 'docs'
+      PathtoPublish: '$(Build.ArtifactStagingDirectory)/release'
+      ArtifactName: 'release'
       publishLocation: 'Container'
