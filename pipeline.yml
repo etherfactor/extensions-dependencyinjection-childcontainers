@@ -108,6 +108,12 @@ jobs:
 #      nuGetFeedType: 'external'
 #      publishFeedCredentials: 'NuGet'
 
+  - task: PowerShell@2
+    displayName: 'Create docs Directory'
+    inputs:
+      targetType: 'inline'
+      script: 'New-Item -Name .placeholder -ItemType File  -Path $(Build.ArtifactStagingDirectory)/docs'
+
   - task: XplatGenerateReleaseNotes@4
     displayName: 'Generate Release Notes'
     inputs:
