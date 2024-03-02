@@ -112,7 +112,7 @@ jobs:
     displayName: 'Create docs Directory'
     inputs:
       targetType: 'inline'
-      script: 'New-Item -Name .placeholder -ItemType File  -Path $(Build.ArtifactStagingDirectory)/docs'
+      script: 'New-Item -ItemType Directory -Force -Path $(Build.ArtifactStagingDirectory)/docs'
 
   - task: XplatGenerateReleaseNotes@4
     displayName: 'Generate Release Notes'
