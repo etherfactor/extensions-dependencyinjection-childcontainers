@@ -1,0 +1,30 @@
+<?xml version="1.0"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2013/05/nuspec.xsd">
+  <metadata>
+    <!-- Package information -->
+    <id>EtherGizmos.Extensions.DependencyInjection.ChildContainers</id>
+    <authors>Ether</authors>
+    <owners>Ether</owners>
+    <licenseUrl>https://licenses.nuget.org/MIT</licenseUrl>
+    <projectUrl>https://github.com/etherfactor/extensions.dependencyinjection.childcontainers</projectUrl>
+    <!--
+	<iconUrl></iconUrl>
+	-->
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <description>This package provides a solution for managing dependencies in .NET applications through the standard Microsoft-provided Dependency Injection, introducing child containers to seamlessly inject dependencies where previously not possible.</description>
+    <releaseNotes>Initial release of EtherGizmos.Extensions.DependencyInjection.ChildContainers, providing support for child containers in .NET DI.</releaseNotes>
+    <!-- Tags -->
+    <tags>.NET DI Nested Child Containers Dependency Injection DependencyInjection</tags>
+    <!-- Dependencies -->
+    <dependencies>
+      <dependency id="Microsoft.Extensions.DependencyInjection" version="6.0.0" />
+      <dependency id="Microsoft.Extensions.Logging.Abstractions" version="6.0.0" />
+    </dependencies>
+  </metadata>
+  <!-- Files to include in the package -->
+  <!--
+  <files>
+    <file src="bin\Release\netstandard2.0\Your.Package.Name.dll" target="lib\netstandard2.0" />
+  </files>
+  -->
+</package>
