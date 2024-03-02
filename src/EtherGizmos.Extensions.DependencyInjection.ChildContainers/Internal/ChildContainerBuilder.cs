@@ -182,7 +182,7 @@ internal class ChildContainerBuilder : IChildContainerBuilder
         {
             //The service type is already in the hashset, so append it at the end as this is what closes the dependency loop
             var serviceType = typeof(TService);
-            throw new CircularDependencyException(_resolutionStack.Value.Select(e => e.Item2).Append(serviceType));
+            throw new CircularDependencyException(stack.Select(e => e.Item2).Append(serviceType));
         }
     }
 }
