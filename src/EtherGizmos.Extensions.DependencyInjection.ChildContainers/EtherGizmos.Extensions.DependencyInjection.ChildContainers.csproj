@@ -15,7 +15,7 @@
 	<PackageTags>di;dependency;injection;nested;child;containers</PackageTags>
 	<PackageProjectUrl>https://github.com/etherfactor/extensions.dependencyinjection.childcontainers</PackageProjectUrl>
 	<PackageLicenseExpression>MIT</PackageLicenseExpression>
-	<PackageReadmeFile>README.md</PackageReadmeFile>
+	<PackageReadmeFile>../../README.md</PackageReadmeFile>
   </PropertyGroup>
 
   <ItemGroup>
