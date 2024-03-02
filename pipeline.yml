@@ -87,18 +87,18 @@ jobs:
     env:
       CHECK_DEPENDENCIES: $(CheckDependencies)
 
-  - task: DotNetCoreCLI@2
-    displayName: 'Package Library'
-    inputs:
-      command: 'pack'
-      packagesToPack: '**/$(Build.Projects.Library).csproj'
-      configuration: '$(Build.Configuration)'
-      includesymbols: true
-      includesource: true
-      versioningScheme: 'byEnvVar'
-      versionEnvVar: 'BUILD_VERSION'
-    env:
-      BUILD_VERSION: $(BuildVersion)
+#  - task: DotNetCoreCLI@2
+#    displayName: 'Package Library'
+#    inputs:
+#      command: 'pack'
+#      packagesToPack: '**/$(Build.Projects.Library).csproj'
+#      configuration: '$(Build.Configuration)'
+#      includesymbols: true
+#      includesource: true
+#      versioningScheme: 'byEnvVar'
+#      versionEnvVar: 'BUILD_VERSION'
+#    env:
+#      BUILD_VERSION: $(BuildVersion)
 
 #  - task: NuGetCommand@2
 #    displayName: 'Publish Library'
@@ -120,19 +120,26 @@ jobs:
       outputfile: '$(Build.ArtifactStagingDirectory)/docs/RELEASENOTES.md'
       templateLocation: 'InLine'
       inlinetemplate: |
-        # {{buildDetails.buildNumber}}
+        ## Build {{buildDetails.buildNumber}}
         {{buildDetails.startTime}}
         
-        **Work Items**
-        |Id|Type|Title|
-        |-|-|-|
+        **Features**
         {{#forEach this.workItems}}
-        |{{this.id}}|{{lookup this.fields 'System.WorkItemType'}}|[{{lookup this.fields 'System.Title'}}]({{replace this.url "_apis/wit/workItems" "_workitems/edit"}})|
-        {{/forEach}}
+        {{#ifEqual (lookup this.fields 'System.WorkItemType') 'Feature'}}
+        ### [{{lookup this.fields 'System.Title'}}]({{replace this.url "_apis/wit/workItems" "_workitems/edit"}})
+        {{lookup this.fields 'System.Description'}}
         
-        **Pull Requests**
-        {{#forEach pullRequests}}
-        * [{{this.title}}]({{replace (replace this.url "_apis/git/repositories" "_git") "pullRequests" "pullRequest"}})
+        **Child Work Items**
+        | ID | Type | Title |
+        |----|------|-------|
+        {{#forEach this.relations}}
+        {{#if (contains this.attributes.name 'Parent')}}
+        {{#with (lookup_a_work_item ../../../../relatedWorkItems this.url)}}
+        | {{this.id}} | {{lookup this.fields 'System.WorkItemType'}} | [{{lookup this.fields 'System.Title'}}]({{replace this.url "_apis/wit/workItems" "_workitems/edit"}}) |
+        {{/with}}
+        {{/if}}
+        {{/forEach}}
+        {{/ifEqual}}
         {{/forEach}}
       dumpPayloadToConsole: false
       dumpPayloadToFile: false
