@@ -125,7 +125,7 @@ jobs:
         
         **Features**
         {{#forEach this.workItems}}
-        {{#ifEqual (lookup this.fields 'System.WorkItemType') 'Feature'}}
+        {{#if (eq (lookup this.fields 'System.WorkItemType') 'Feature')}}
         ### [{{lookup this.fields 'System.Title'}}]({{replace this.url "_apis/wit/workItems" "_workitems/edit"}})
         {{lookup this.fields 'System.Description'}}
         
@@ -139,7 +139,7 @@ jobs:
         {{/with}}
         {{/if}}
         {{/forEach}}
-        {{/ifEqual}}
+        {{/if}}
         {{/forEach}}
       dumpPayloadToConsole: false
       dumpPayloadToFile: false
