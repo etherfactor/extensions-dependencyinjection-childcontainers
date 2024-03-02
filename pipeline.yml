@@ -107,3 +107,41 @@ jobs:
 #      packagesToPush: '$(Build.ArtifactStagingDirectory)/**/*.nupkg;!$(Build.ArtifactStagingDirectory)/**/*.symbols.nupkg'
 #      nuGetFeedType: 'external'
 #      publishFeedCredentials: 'NuGet'
+
+  - task: XplatGenerateReleaseNotes@4
+    displayName: 'Generate Release Notes'
+    inputs:
+      outputfile: '$(Build.ArtifactStagingDirectory)/docs/RELEASENOTES.md'
+      templateLocation: 'InLine'
+      inlinetemplate: |
+        # {{buildDetails.buildNumber}}
+        {{buildDetails.startTime}}
+        
+        **Work Items**
+        |Id|Type|Title|
+        |-|-|-|
+        {{#forEach this.workItems}}
+        |{{this.id}}|{{lookup this.fields 'System.WorkItemType'}}|[{{lookup this.fields 'System.Title'}}]({{replace this.url "_apis/wit/workItems" "_workitems/edit"}})|
+        {{/forEach}}
+        
+        **Pull Requests**
+        {{#forEach pullRequests}}
+        * [{{this.title}}]({{replace (replace this.url "_apis/git/repositories" "_git") "pullRequests" "pullRequest"}})
+        {{/forEach}}
+      dumpPayloadToConsole: false
+      dumpPayloadToFile: false
+      replaceFile: true
+      getParentsAndChildren: false
+      getAllParents: false
+      getIndirectPullRequests: false
+      stopOnError: false
+      considerPartiallySuccessfulReleases: false
+      checkForManuallyLinkedWI: false
+      wiqlFromTarget: 'WorkItems'
+
+  - task: PublishBuildArtifacts@1
+    displayName: 'Publish Documentation'
+    inputs:
+      PathtoPublish: '$(Build.ArtifactStagingDirectory)/docs'
+      ArtifactName: 'docs'
+      publishLocation: 'Container'
