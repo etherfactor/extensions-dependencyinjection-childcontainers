@@ -86,10 +86,13 @@ jobs:
 
 - job: publish
   #condition: and( succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main') )
-  dependsOn: build
+  dependsOn:
+    - prepare
+    - build
   displayName: 'Publish Tasks'
   variables:
     CheckDependencies: $[ convertToJson( dependencies ) ]
+    BuildVersion: $[ dependencies.prepare.outputs['gitversionexecute.GitVersion.SemVer'] ]
   steps:
 
   - task: PowerShell@2
@@ -101,20 +104,16 @@ jobs:
       CHECK_DEPENDENCIES: $(CheckDependencies)
 
   - task: DotNetCoreCLI@2
-    displayName: 'Build Library'
-    inputs:
-      command: 'build'
-      projects: '**/$(Build.Projects.Library).csproj'
-      arguments: '--configuration $(Build.Configuration)'
-
-  - task: NuGetCommand@2
     displayName: 'Package Library'
     inputs:
       command: 'pack'
       packagesToPack: '**/$(Build.Projects.Library).csproj'
       configuration: '$(Build.Configuration)'
-      versioningScheme: 'byBuildNumber'
-      includeSymbols: true
+      includesymbols: true
+      includesource: true
+      versioningScheme: 'byEnvVar'
+    env:
+      BUILD_VERSION: $(BuildVersion)
 
 #  - task: NuGetCommand@2
 #    displayName: 'Publish Library'

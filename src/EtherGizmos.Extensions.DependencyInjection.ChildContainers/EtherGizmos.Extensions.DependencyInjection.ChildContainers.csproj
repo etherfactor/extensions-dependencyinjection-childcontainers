@@ -1,10 +1,19 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>netstandard2.1</TargetFramework>
+    <TargetFrameworks>netstandard2.1;net6.0;net8.0</TargetFrameworks>
 	<LangVersion>11.0</LangVersion>
     <Nullable>enable</Nullable>
     <RootNamespace>EtherGizmos.Extensions.DependencyInjection</RootNamespace>
+	<GenerateDocumentationFile>true</GenerateDocumentationFile>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <PackageId>EtherGizmos.Extensions.DependencyInjection.ChildContainers</PackageId>
+	<Authors>EtherFactor</Authors>
+	<PackageTags>di;dependency;injection;nested;child;containers</PackageTags>
+	<PackageProjectUrl>https://github.com/etherfactor/extensions.dependencyinjection.childcontainers</PackageProjectUrl>
+	<PackageLicenseExpression>MIT</PackageLicenseExpression>
   </PropertyGroup>
 
   <ItemGroup>
