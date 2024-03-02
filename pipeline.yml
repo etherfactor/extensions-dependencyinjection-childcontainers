@@ -46,24 +46,6 @@ jobs:
     env:
       CHECK_DEPENDENCIES: $(CheckDependencies)
 
-  - task: NuGetToolInstaller@1
-    displayName: 'Install NuGet'
-    inputs:
-      versionSpec: '$(NuGet.Version)'
-
-  - task: DotNetCoreCLI@2
-    displayName: 'Restore Projects'
-    inputs:
-      command: 'restore'
-      projects: '$(Build.Projects)'
-      feedsToUse: 'select'
-
-  - task: DotNetCoreCLI@2
-    displayName: 'Build Projects'
-    inputs:
-      command: 'build'
-      projects: '$(Build.Projects)'
-
   - task: DotNetCoreCLI@2
     displayName: 'Perform Tests'
     inputs:
@@ -83,6 +65,8 @@ jobs:
       codeCoverageTool: 'Cobertura'
       summaryFileLocation: '$(Build.SourcesDirectory)/CoverageResults/Cobertura.xml'
       reportDirectory: '$(Build.SourcesDirectory)/CoverageResults'
+    env:
+      DISABLE_COVERAGE_AUTOGENERATE: 'true'
 
 - job: publish
   #condition: and( succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main') )
