@@ -1,0 +1,39 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>netstandard2.1;net6.0;net8.0</TargetFrameworks>
+    <LangVersion>11.0</LangVersion>
+    <Nullable>enable</Nullable>
+    <RootNamespace>EtherGizmos.Extensions.DependencyInjection</RootNamespace>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <PackageId>EtherGizmos.Extensions.DependencyInjection.ChildContainers</PackageId>
+    <Description>Introduces child DI containers and enables resolving services within the parent container after other parent services have been configured.</Description>
+    <Authors>EtherFactor</Authors>
+    <PackageTags>di;dependency;injection;nested;child;containers</PackageTags>
+    <PackageProjectUrl>https://github.com/etherfactor/extensions.dependencyinjection.childcontainers</PackageProjectUrl>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="6.*" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="6.*" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">
+      <_Parameter1>$(AssemblyName).Tests</_Parameter1>
+    </AssemblyAttribute>
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="../../README.md">
+      <Pack>True</Pack>
+      <PackagePath>/</PackagePath>
+    </None>
+  </ItemGroup>
+
+</Project>

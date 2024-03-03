@@ -1,0 +1,122 @@
+trigger:
+- main
+
+pool:
+  vmImage: 'windows-latest'
+
+variables:
+  GitVersion.Version: '5.x.x'
+  GitVersion.Config: 'gitversion.yml'
+  NuGet.Version: '6.x.x'
+  Build.Projects: '**/*.csproj'
+  Build.Projects.Library: 'EtherGizmos.Extensions.DependencyInjection.ChildContainers'
+  Build.Configuration: 'Release'
+
+jobs:
+- job: prepare
+  displayName: 'Pre-Build Tasks'
+  steps:
+  - checkout: self
+    fetchDepth: 0
+    clean: true
+
+  - task: gitversion/setup@0
+    displayName: 'Install GitVersion'
+    inputs:
+      versionSpec: '$(GitVersion.Version)'
+
+  - task: gitversion/execute@0
+    displayName: 'Run GitVersion'
+    inputs:
+      useConfigFile: true
+      configFilePath: '$(GitVersion.Config)'
+
+- job: build
+  dependsOn: prepare
+  displayName: 'Build Tasks'
+  variables:
+    CheckDependencies: $[ convertToJson( dependencies ) ]
+  steps:
+
+  - task: PowerShell@2
+    displayName: 'Debug Dependencies'
+    inputs:
+      targetType: 'inline'
+      script: 'Write-Host $env:CHECK_DEPENDENCIES'
+    env:
+      CHECK_DEPENDENCIES: $(CheckDependencies)
+
+  - task: DotNetCoreCLI@2
+    displayName: 'Perform Tests'
+    inputs:
+      command: 'test'
+      projects: '**/*.*Tests.csproj'
+      arguments: '--collect "XPlat Code Coverage"'
+
+  - task: reportgenerator@5
+    displayName: 'Combine Code Coverage'
+    inputs:
+      reports: '$(Agent.TempDirectory)/**/coverage.cobertura.xml'
+      targetdir: '$(Build.SourcesDirectory)/CoverageResults'
+
+  - task: PublishCodeCoverageResults@1
+    displayName: 'Publish Code Coverage'
+    inputs:
+      codeCoverageTool: 'Cobertura'
+      summaryFileLocation: '$(Build.SourcesDirectory)/CoverageResults/Cobertura.xml'
+      reportDirectory: '$(Build.SourcesDirectory)/CoverageResults'
+    env:
+      DISABLE_COVERAGE_AUTOGENERATE: 'true'
+
+- job: publish
+  condition: and( succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main') )
+  dependsOn:
+    - prepare
+    - build
+  displayName: 'Publish Tasks'
+  variables:
+    CheckDependencies: $[ convertToJson( dependencies ) ]
+    BuildVersion: $[ dependencies.prepare.outputs['gitversionexecute.GitVersion.SemVer'] ]
+  steps:
+
+  - task: PowerShell@2
+    displayName: 'Debug Dependencies'
+    inputs:
+      targetType: 'inline'
+      script: 'Write-Host $env:CHECK_DEPENDENCIES'
+    env:
+      CHECK_DEPENDENCIES: $(CheckDependencies)
+
+  - task: DotNetCoreCLI@2
+    displayName: 'Package Library'
+    inputs:
+      command: 'pack'
+      packagesToPack: '**/$(Build.Projects.Library).csproj'
+      configuration: '$(Build.Configuration)'
+      includesymbols: true
+      includesource: true
+      versioningScheme: 'byEnvVar'
+      versionEnvVar: 'BUILD_VERSION'
+    env:
+      BUILD_VERSION: $(BuildVersion)
+
+  - task: NuGetCommand@2
+    displayName: 'Publish Library'
+    inputs:
+      command: 'push'
+      packagesToPush: '$(Build.ArtifactStagingDirectory)/**/*.nupkg;!$(Build.ArtifactStagingDirectory)/**/*.symbols.nupkg'
+      nuGetFeedType: 'external'
+      publishFeedCredentials: 'NuGet'
+
+  - task: PowerShell@2
+    displayName: 'Create Trigger Artifact'
+    inputs:
+      targetType: 'inline'
+      script: 'New-Item -ItemType File -Force -Path $(Build.ArtifactStagingDirectory)/release/.placeholder'
+
+  - task: PublishBuildArtifacts@1
+    displayName: 'Publish Trigger Artifact'
+    inputs:
+      PathtoPublish: '$(Build.ArtifactStagingDirectory)/release'
+      ArtifactName: 'release'
+      publishLocation: 'Container'
