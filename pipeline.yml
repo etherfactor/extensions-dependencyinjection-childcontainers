@@ -69,7 +69,7 @@ jobs:
       DISABLE_COVERAGE_AUTOGENERATE: 'true'
 
 - job: publish
-  #condition: and( succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main') )
+  condition: and( succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main') )
   dependsOn:
     - prepare
     - build
@@ -87,26 +87,26 @@ jobs:
     env:
       CHECK_DEPENDENCIES: $(CheckDependencies)
 
-#  - task: DotNetCoreCLI@2
-#    displayName: 'Package Library'
-#    inputs:
-#      command: 'pack'
-#      packagesToPack: '**/$(Build.Projects.Library).csproj'
-#      configuration: '$(Build.Configuration)'
-#      includesymbols: true
-#      includesource: true
-#      versioningScheme: 'byEnvVar'
-#      versionEnvVar: 'BUILD_VERSION'
-#    env:
-#      BUILD_VERSION: $(BuildVersion)
+  - task: DotNetCoreCLI@2
+    displayName: 'Package Library'
+    inputs:
+      command: 'pack'
+      packagesToPack: '**/$(Build.Projects.Library).csproj'
+      configuration: '$(Build.Configuration)'
+      includesymbols: true
+      includesource: true
+      versioningScheme: 'byEnvVar'
+      versionEnvVar: 'BUILD_VERSION'
+    env:
+      BUILD_VERSION: $(BuildVersion)
 
-#  - task: NuGetCommand@2
-#    displayName: 'Publish Library'
-#    inputs:
-#      command: 'push'
-#      packagesToPush: '$(Build.ArtifactStagingDirectory)/**/*.nupkg;!$(Build.ArtifactStagingDirectory)/**/*.symbols.nupkg'
-#      nuGetFeedType: 'external'
-#      publishFeedCredentials: 'NuGet'
+  - task: NuGetCommand@2
+    displayName: 'Publish Library'
+    inputs:
+      command: 'push'
+      packagesToPush: '$(Build.ArtifactStagingDirectory)/**/*.nupkg;!$(Build.ArtifactStagingDirectory)/**/*.symbols.nupkg'
+      nuGetFeedType: 'external'
+      publishFeedCredentials: 'NuGet'
 
   - task: PowerShell@2
     displayName: 'Create Trigger Artifact'
