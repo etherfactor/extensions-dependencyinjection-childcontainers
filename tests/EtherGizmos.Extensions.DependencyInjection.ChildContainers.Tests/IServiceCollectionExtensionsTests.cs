@@ -434,6 +434,37 @@ internal class IServiceCollectionExtensionsTests
         }
     }
 
+    [Test]
+    public void AddChildContainer_CreateScopeWithinChild_ResolvesParentService()
+    {
+        //Arrange
+        _serviceCollection
+            .AddScoped<Parent>()
+            .AddScoped<Child>()
+            .AddChildContainer((childServices, parentServices) =>
+            {
+                childServices.AddSingleton<NestedService>();
+            })
+            .ImportScoped<Parent>()
+            .ForwardSingleton<NestedService>();
+
+        //Act
+        var provider = _serviceCollection.BuildServiceProvider();
+
+        var scope = provider.CreateScope().ServiceProvider;
+        var childService = scope.GetRequiredService<NestedService>();
+
+        var childScope = childService.CreateScopedProvider();
+        var parentService = childScope.GetRequiredService<Parent>();
+
+        // Assert
+        Assert.Multiple(() =>
+        {
+            Assert.That(childService, Is.Not.Null);
+            Assert.That(parentService, Is.Not.Null);
+        });
+    }
+
     private class TestA
     {
         public string Data { get; set; } = null!;
@@ -491,6 +522,21 @@ internal class IServiceCollectionExtensionsTests
         public RecursiveChild(Parent parent)
         {
             Parent = parent;
+        }
+    }
+
+    private class NestedService
+    {
+        private readonly IServiceProvider _serviceProvider;
+
+        public NestedService(IServiceProvider serviceProvider)
+        {
+            _serviceProvider = serviceProvider;
+        }
+
+        public IServiceProvider CreateScopedProvider()
+        {
+            return _serviceProvider.CreateScope().ServiceProvider;
         }
     }
 }

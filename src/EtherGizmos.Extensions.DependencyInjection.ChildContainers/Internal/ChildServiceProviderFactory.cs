@@ -37,7 +37,13 @@ internal class ChildServiceProviderFactory
             id,
             id =>
             {
-                childServices.AddSingleton<ParentServiceProviderSingletonSource>();
+                childServices.AddSingleton<ParentServiceProviderSingletonSource>(services =>
+                {
+                    var service = new ParentServiceProviderSingletonSource();
+                    service.SetProvider(_parentRootProvider);
+
+                    return service;
+                });
                 childServices.AddScoped<ParentServiceProviderScopedSource>();
 
                 configureChild(childServices, _parentRootProvider);
@@ -48,19 +54,45 @@ internal class ChildServiceProviderFactory
                     if (import.Lifetime == ServiceLifetime.Scoped)
                     {
                         //Scoped imports need to be pulled from a scoped parent context (note 2nd line)
-                        descriptor = ServiceDescriptor.Describe(import.ServiceType, childProvider =>
-                            childProvider.GetRequiredService<ParentServiceProviderScopedSource>()
-                                .ParentProvider
-                                .GetRequiredService(import.ServiceType),
+                        descriptor = ServiceDescriptor.Describe(
+                            import.ServiceType,
+                            childProvider =>
+                            {
+                                var source = childProvider.GetRequiredService<ParentServiceProviderScopedSource>();
+
+                                var provider = source.ParentProvider;
+                                if (provider is null)
+                                {
+                                    //Since we are the ones making a child scope in a parent scope, this will only be needed
+                                    //if a child scope is created outside a parent context. Since no parent scope is
+                                    //associated, one will need to be created
+                                    provider = childProvider.GetRequiredService<ParentServiceProviderSingletonSource>().ParentProvider
+                                        .CreateScope().ServiceProvider;
+
+                                    source.SetProvider(provider);
+                                }
+
+                                var service = provider.GetRequiredService(import.ServiceType);
+
+                                return service;
+                            },
                             import.Lifetime);
                     }
                     else
                     {
                         //Singleton and transient imports can be pulled from the root parent context (note 2nd line)
-                        descriptor = ServiceDescriptor.Describe(import.ServiceType, childProvider =>
-                            childProvider.GetRequiredService<ParentServiceProviderSingletonSource>()
-                                .ParentProvider
-                                .GetRequiredService(import.ServiceType),
+                        descriptor = ServiceDescriptor.Describe(
+                            import.ServiceType,
+                            childProvider =>
+                            {
+                                var source = childProvider.GetRequiredService<ParentServiceProviderSingletonSource>();
+
+                                var provider = source.ParentProvider;
+
+                                var service = provider.GetRequiredService(import.ServiceType);
+
+                                return service;
+                            },
                             import.Lifetime);
                     }
                     childServices.Add(descriptor);

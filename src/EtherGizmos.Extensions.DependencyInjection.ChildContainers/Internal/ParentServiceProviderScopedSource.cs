@@ -12,8 +12,7 @@ internal class ParentServiceProviderScopedSource
     /// <summary>
     /// The scoped parent service provider.
     /// </summary>
-    public IServiceProvider ParentProvider => _parentProvider
-        ?? throw new InvalidOperationException("No parent provider was specified");
+    public IServiceProvider? ParentProvider => _parentProvider;
 
     public void SetProvider(IServiceProvider parentProvider)
     {
