@@ -13,7 +13,7 @@
     <Description>Introduces child DI containers and enables resolving services within the parent container after other parent services have been configured.</Description>
     <Authors>EtherFactor</Authors>
     <PackageTags>di;dependency;injection;nested;child;containers</PackageTags>
-    <PackageProjectUrl>https://github.com/etherfactor/extensions.dependencyinjection.childcontainers</PackageProjectUrl>
+    <PackageProjectUrl>https://github.com/etherfactor/extensions-dependencyinjection-childcontainers</PackageProjectUrl>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>
